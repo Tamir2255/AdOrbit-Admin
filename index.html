@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfriAd Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center font-sans p-4">
+
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 space-y-6">
+        <div class="text-center space-y-1">
+            <div class="text-2xl font-extrabold text-white">Afri<span class="text-brand-orange" style="color:#FF5A00">Ad</span> Admin</div>
+            <p class="text-sm text-slate-500">Internal review console</p>
+        </div>
+
+        <form id="login-form" class="space-y-4" onsubmit="handleLogin(event)">
+            <input type="email" id="login-email" placeholder="Admin Email" required class="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-orange-500">
+            <input type="password" id="login-password" placeholder="Password" required class="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white placeholder-slate-500 outline-none focus:ring-2 focus:ring-orange-500">
+            <button type="submit" class="w-full h-12 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl">Sign In</button>
+        </form>
+        <p id="error-msg" class="text-sm text-red-400 text-center hidden"></p>
+        <p class="text-xs text-slate-600 text-center">Admin access requires a database-promoted account. See the platform README.</p>
+    </div>
+
+    <script>
+        // Same backend the advertiser/earner platforms use.
+        const API_BASE_URL = 'https://afriad-backend.onrender.com'; // <-- replace with your real Render service URL
+
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('adminToken')) window.location.href = 'dashboard.html';
+        });
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('error-msg');
+            errorEl.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    errorEl.innerText = data.error || 'Login failed.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (data.user.role !== 'admin') {
+                    errorEl.innerText = 'This account does not have admin access.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminUser', JSON.stringify(data.user));
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                console.error(err);
+                errorEl.innerText = 'Connection to server failed.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
